@@ -1,0 +1,55 @@
+# Task 2
+The following are Linux commands I tried out on my Vagrant machine asides from the examples taught in class, with their names, illustrations and uses.  
+
+
+
+1. ``find``  
+This command is used to search for a file on the bash terminal.
+
+
+![linux command find](linux%20command%201.png)  
+
+2. ``du -s``  
+This command is used to display the disk usage on the bash terminal.
+![linux command du -s](linux%20command%202.png)  
+
+3. ``dmesg -k``  
+The ``dmesg`` command is used to display kernel related messages on the Linux  system. The ``k`` in ``dmesg -k`` stands for kernel. This command is used to disply kernel messages in the bash terminal. 
+![linux command dmesg -k](linux%20command%203.png)  
+
+4. ``man ls``  
+
+This command is used to show the documentation on the ``ls`` command on the bash terminal.
+![linux command man ls](linux%20command%204.png)  
+
+5. ``history``  
+This command displays a history of all the commands that have been executed on the bash terminal. 
+![linux command history](linux%20command%205.png)  
+
+6. ``echo -e``  
+This command is used to display an argument or sentence. The ``-e`` tag makes sure that the ``echo`` command recognizes the backlash escape sequences inside the argument.
+![linux command echo -e](linux%20command%206.png)  
+
+7. ``ls -l``  
+This command is used to show a comprehensive version of all the files and directories in the present working directory.  
+![linux command ls -l](linux%20command%207.png)  
+
+8. ``cat <filename>``  
+This command is used to display the contents of a named file.  
+![linux command cat <filename>](linux%20command%209.png)  
+
+9. ``touch <filename>``  
+This command is used to create a new file tha does not have any content embedded in it.
+
+![linux command touch <filename>](linux%20command%209.png)  
+
+10. ``pwd``  
+This command is used to display the path of the present working directory.  
+
+![](linux%20command%2010.png)
+
+
+
+
+
+
