@@ -1,0 +1,188 @@
+---
+
+- hosts: all
+  become: true
+  tasks:
+
+    - name: Set a Hostname
+      ansible.builtin.hostname:
+        name: server.rejoiceanodo.me
+
+
+    - name: Set Timezone to Africa, Lagos
+      timezone:
+        name: Africa/Lagos
+
+    - name: Install Apache and required  dependencies
+      apt:
+        name:
+          - apache2
+          - libapache2-mod-php
+          - curl
+          - php-curl
+          - git
+          - zip
+          - unzip
+          - php-mysql
+          - php8.1-cli
+          - php-curl
+          - php-xml
+          - ufw
+        update_cache: yes
+        state: latest
+
+    - name: Allow UFW
+      ufw:
+        state: enabled
+        policy: allow
+
+    - name: Set Logging
+      ufw:
+        logging: 'on'
+
+    - ufw:
+        rule: allow
+        name: OpenSSH
+
+    - name: Restart ufw
+      service:
+        name: ufw
+        state: restarted
+
+    - name: Install MySQL Server
+      apt:
+          name:
+            - libmysqlclient-dev
+            - mysql-server
+            - mysql-client
+            - pip
+
+    - name: Install pymysql
+      pip:
+        name: pymysql
+        state: present
+
+    - name: Start MySQL
+      ansible.builtin.service:
+        name: mysql.service
+        state: started
+
+    - name: Removes anonymous user account for localhost
+      community.mysql.mysql_user:
+        name: ''
+        host: localhost
+        state: absent
+        login_unix_socket: /run/mysqld/mysqld.sock
+
+    - name: Removes  anonymous user accounts
+      community.mysql.mysql_user:
+        name: ''
+        host_all: yes
+        state: absent
+        login_unix_socket: /run/mysqld/mysqld.sock
+
+    - name: Create database user with password and all database privileges and 'WITH GRANT OPTION'
+      community.mysql.mysql_user:
+        name: miniapp
+        password: miniapp
+        priv: '*.*:ALL,GRANT'
+        state: present
+        login_unix_socket: /run/mysqld/mysqld.sock
+
+
+    - name: Create a new database with name 'miniapp'
+      mysql_db:
+        name: miniapp
+        state: present
+        login_unix_socket: /run/mysqld/mysqld.sock
+
+    - name: Start service MySQL,
+      ansible.builtin.service:
+        name: mysql.service
+        state: started
+
+    - name: Install composer
+      shell: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+      args:
+        creates: /usr/local/bin/composer
+
+    - name:  permissions for composer file
+      file:
+        path: /usr/local/bin/composer
+        mode: a+x
+        state: file
+
+    - name: clone laravel miniapp project
+      git:
+        repo: https://github.com/f1amy/laravel-realworld-example-app.git
+        dest: /var/www/miniapp
+
+    - name: Set File Permissions to www-data
+      command: sudo chmod -R 777 /var/www/miniapp
+
+    - name: Set Owner and Group for miniapp
+      command: sudo chown -R www-data:www-data /var/www/miniapp
+
+    - name: set permissions for Laravel storage folder
+      command: sudo chmod -R 755 /var/www/miniapp/storage
+
+    - name: composer update
+      composer:
+        command: update
+        working_dir: /var/www/miniapp
+      environment:
+        COMPOSER_ALLOW_SUPERUSER: 1
+
+    - name: copy .env file
+      copy:
+        src: files/.env
+        dest: /var/www/miniapp
+        owner: www-data
+        group: www-data
+        mode: 0644
+
+    - name: copy htaccess file
+      copy:
+        src: files/.htaccess
+        dest: /var/www/miniapp
+        owner: root
+        group: root
+        mode: 644
+
+    - name: Copy web.php file
+      copy:
+       src: files/web.php
+       dest: /var/www/miniapp/routes/web.php
+
+    - name: copy apache config
+      copy:
+        src: files/miniapp.conf
+        dest: /etc/apache2/sites-available/miniapp.conf
+        owner: root
+        group: root
+        mode: 644
+
+    - name: enable the new config
+      shell: |
+         a2ensite miniapp.conf
+         a2dissite 000-default.conf
+         a2enmod rewrite
+         service apache2 restart
+
+    - name: composer create-project
+      composer:
+        command: create-project
+        working_dir: /var/www/miniapp
+      environment:
+        COMPOSER_ALLOW_SUPERUSER: 1
+
+    - name: setup laravel
+      shell: |
+         cd /var/www/miniapp
+         php artisan key:generate
+
+    - name: Run Composer Migrate
+      shell: |
+         cd /var/www/miniapp
+         php artisan migrate
+         php artisan migrate --seed
